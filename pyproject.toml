@@ -1,0 +1,20 @@
+[project]
+name = "langchainv1"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+authors = [
+    { name = "Paradoxical7", email = "111605473+Paradoxical7@users.noreply.github.com" }
+]
+requires-python = ">=3.13"
+dependencies = [
+    "langchain>=1.4.0",
+    "langchain-ollama>=1.1.0",
+]
+
+[project.scripts]
+langchainv1 = "langchainv1:main"
+
+[build-system]
+requires = ["uv_build>=0.12.10,<0.13.0"]
+build-backend = "uv_build"
