@@ -1,3 +1,4 @@
+from langchain_google_genai import ChatGoogleGenerativeAI
 import requests
 from langchain_ollama import ChatOllama
 from langchain_core.tools import tool
@@ -12,32 +13,42 @@ def calculator(expression: str) -> str:
 @tool
 def get_weather(city: str) -> str:
     """Get the current weather for a given city."""
-    # 1. Turn the city name into coordinates
     geo = requests.get(
-        
         "https://geocoding-api.open-meteo.com/v1/search",
         params={"name": city, "count": 1},
     ).json()
-    print("DEBUG geo:", geo)
 
     if not geo.get("results"):
         return f"Couldn't find a city called {city}."
 
     loc = geo["results"][0]
-    lat, lon = loc["latitude"], loc["longitude"]
-
-    # 2. Get the current weather at those coordinates
     weather = requests.get(
         "https://api.open-meteo.com/v1/forecast",
-        params={"latitude": lat, "longitude": lon, "current": "temperature_2m"},
+        params={
+            "latitude": loc["latitude"],
+            "longitude": loc["longitude"],
+            "current": "temperature_2m",
+            "temperature_unit": "fahrenheit",
+        },
     ).json()
 
-    print("DEBUG weather:", weather)
     temp = weather["current"]["temperature_2m"]
-    return f"It's currently {temp}°C in {loc['name']}."
+    return f"It's currently {temp}°F in {loc['name']}."
+
+def extract_text(content) -> str:
+    """Pull plain text out of a model response, whether it's a
+    simple string or a list of content blocks (as Gemini returns)."""
+    if isinstance(content, str):
+        return content
+    # content is a list of blocks; grab the text from each 'text' block
+    parts = []
+    for block in content:
+        if isinstance(block, dict) and block.get("type") == "text":
+            parts.append(block["text"])
+    return " ".join(parts) if parts else str(content)
 
 def main() -> None:
-    llm = ChatOllama(model="llama3.1")
+    llm = ChatGoogleGenerativeAI(model="gemini-3.6-flash")
     llm_with_tools = llm.bind_tools([calculator, get_weather])
     tools_by_name = {"calculator": calculator, "get_weather": get_weather}
 
@@ -72,7 +83,7 @@ def main() -> None:
             messages.append(ai_msg)
 
             if not ai_msg.tool_calls:
-                print("Agent:", ai_msg.content, "\n")
+                print("Agent:", extract_text(ai_msg.content), "\n")
                 break
 
             for call in ai_msg.tool_calls:
