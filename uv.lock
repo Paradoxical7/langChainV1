@@ -329,12 +329,14 @@ source = { editable = "." }
 dependencies = [
     { name = "langchain" },
     { name = "langchain-ollama" },
+    { name = "requests" },
 ]
 
 [package.metadata]
 requires-dist = [
     { name = "langchain", specifier = ">=1.4.0" },
     { name = "langchain-ollama", specifier = ">=1.1.0" },
+    { name = "requests", specifier = ">=2.34.2" },
 ]
 
 [[package]]
